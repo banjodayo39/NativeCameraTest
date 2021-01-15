@@ -2,9 +2,13 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.banjodayo.nativecameratest">
 
+    <uses-permission android:name="android.permission.CAMERA" />
+
     <uses-feature
-        android:glEsVersion="0x00030000"
+        android:glEsVersion="0x00020000"
         android:required="true" />
+    <uses-feature
+        android:name="android.hardware.camera2"/>
 
     <application
         android:allowBackup="true"
@@ -12,17 +16,21 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.NativeCameraTest">
-        <activity android:name=".NativeClassActivity">
+        android:theme="@style/Theme.NativeCameraTest"
+        android:screenOrientation="portrait">
+    <activity android:name=".activity.OpenGLCamera">
+
+        </activity>
+        <activity android:name=".activity.GLActivity"
+            android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".MainActivity">
-
-        </activity>
+        <activity android:name=".activity.NativeClassActivity"></activity>
+        <activity android:name=".activity.MainActivity" />
     </application>
 
 </manifest>

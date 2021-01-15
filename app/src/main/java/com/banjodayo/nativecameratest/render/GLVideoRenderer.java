@@ -1,17 +1,19 @@
-package com.banjodayo.nativecameratest.opengl;
+package com.banjodayo.nativecameratest.render;
 
 import android.content.Context;
 
 
+import android.graphics.Bitmap;
 import android.opengl.GLSurfaceView;
 
-import com.banjodayo.nativecameratest.R;
+import androidx.lifecycle.MutableLiveData;
+
 import com.banjodayo.nativecameratest.objects.Mallet;
 import com.banjodayo.nativecameratest.objects.Table;
 import com.banjodayo.nativecameratest.programs.ColorShaderProgram;
 import com.banjodayo.nativecameratest.programs.TextureShaderProgram;
+import com.banjodayo.nativecameratest.utils.ImageRenderingHelper;
 import com.banjodayo.nativecameratest.utils.AirHockeyMatrixHelper;
-import com.banjodayo.nativecameratest.utils.TextureHelper;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
@@ -22,20 +24,54 @@ import static android.opengl.Matrix.rotateM;
 import static android.opengl.Matrix.setIdentityM;
 import static android.opengl.Matrix.translateM;
 
-public class AirHockeyRenderer implements GLSurfaceView.Renderer {
+public class GLVideoRenderer extends VideoRenderer implements GLSurfaceView.Renderer {
 
+    private GLSurfaceView mGLSurface;
     private final Context context;
     private final float[] projectionMatrix = new float[16];
     private final float[] modelMatrix = new float[16];
     private Table table;
+
     private Mallet mallet;
     private TextureShaderProgram textureProgram;
     private ColorShaderProgram colorProgram;
     private int texture;
 
-    public AirHockeyRenderer(Context context) {
+    private MutableLiveData<Bitmap> bitmapLiveData;
+
+    public GLVideoRenderer(Context context) {
+      //  create(Type.GL_YUV420_FILTER.getValue());
         this.context = context;
+
     }
+
+    public void init(GLSurfaceView glSurface) {
+        mGLSurface = glSurface;
+        // Create an OpenGL ES 2 context.
+        mGLSurface.setEGLContextClientVersion(2);
+        mGLSurface.setRenderer(this);
+        mGLSurface.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
+    }
+
+    public void requestRender() {
+        if (mGLSurface != null) {
+            mGLSurface.requestRender();
+        }
+    }
+
+    public MutableLiveData<Bitmap> getBitmapLiveData() {
+        if(bitmapLiveData == null){
+            bitmapLiveData = new MutableLiveData<>();
+        }
+        return bitmapLiveData;
+    }
+
+    public void loadTexture(Bitmap bitmap){
+        if(bitmap != null){
+            texture = ImageRenderingHelper.loadTexture(bitmap);
+        }
+    }
+
 
     @Override
     public void onSurfaceCreated(GL10 glUnused, EGLConfig config) {
@@ -44,13 +80,19 @@ public class AirHockeyRenderer implements GLSurfaceView.Renderer {
         mallet = new Mallet();
         textureProgram = new TextureShaderProgram(context);
         colorProgram = new ColorShaderProgram(context);
-        texture = TextureHelper.loadTexture(context, R.drawable.air_hockey_surface);
+        if(bitmapLiveData != null){
+            texture = ImageRenderingHelper.loadTexture(bitmapLiveData.getValue());
+        }
     }
 
     @Override
     public void onSurfaceChanged(GL10 gl10, int width, int height) {
         glViewport(0, 0, width  , height);
 
+        if(bitmapLiveData != null && bitmapLiveData.getValue() != null){
+            texture = ImageRenderingHelper.loadTexture(bitmapLiveData.getValue());
+
+        }
         AirHockeyMatrixHelper.perspectiveM(projectionMatrix, 45, (float) width
                 / (float) height, 1f, 10f);
 
@@ -61,6 +103,7 @@ public class AirHockeyRenderer implements GLSurfaceView.Renderer {
         final float[] temp = new float[16];
         multiplyMM(temp, 0, projectionMatrix, 0, modelMatrix, 0);
         System.arraycopy(temp, 0, projectionMatrix, 0, temp.length);
+
 
 //        // screen rotation
 //        final float aspectRatio = width > height ? (float) width / (float) height : (float) height / (float) width;
@@ -91,4 +134,6 @@ public class AirHockeyRenderer implements GLSurfaceView.Renderer {
         mallet.bindData(colorProgram);
         mallet.draw();
     }
+
 }
+

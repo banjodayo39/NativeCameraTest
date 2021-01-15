@@ -1,7 +1,6 @@
-package com.banjodayo.nativecameratest;
+package com.banjodayo.nativecameratest.activity;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.databinding.DataBindingUtil;
 
 import android.app.ActivityManager;
 import android.content.Context;
@@ -11,27 +10,24 @@ import android.os.Bundle;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.banjodayo.nativecameratest.databinding.ActivityMainBinding;
+import com.banjodayo.nativecameratest.R;
+import com.banjodayo.nativecameratest.opengl.AirHockeyGLView;
+import com.banjodayo.nativecameratest.opengl.AirHockeyRenderer;
 import com.banjodayo.nativecameratest.opengl.OpenGLRenderer;
 
-public class MainActivity extends AppCompatActivity {
+public class NativeClassActivity extends AppCompatActivity {
 
-    // Used to load the 'native-lib' library on application startup.
-    static {
-        System.loadLibrary("native-lib");
-    }
 
-    private ActivityMainBinding binding;
     boolean renderSet = false;
+    private AirHockeyGLView airHockeyGLView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        binding = DataBindingUtil.setContentView(this, R.layout.activity_main);
-        // Example of a call to a native method
+        setContentView(R.layout.activity_native_class);
+
         TextView tv = findViewById(R.id.sample_text);
-        tv.setText(stringFromJNI());
-        binding.sampleText.setText(stringFromJNI());
+        airHockeyGLView = (AirHockeyGLView) findViewById(R.id.airHockeyView);
         setGLSupport();
 
     }
@@ -52,8 +48,8 @@ public class MainActivity extends AppCompatActivity {
                         || Build.MODEL.contains("Android SDK built for x86")));
 
         if(supportsEs3){
-            binding.openGLView.setEGLContextClientVersion(3);
-            binding.openGLView.setRenderer(new OpenGLRenderer());
+            airHockeyGLView.setEGLContextClientVersion(2);
+            airHockeyGLView.setRenderer(new AirHockeyRenderer(this));
 
             renderSet = true;
         } else {
@@ -66,7 +62,7 @@ public class MainActivity extends AppCompatActivity {
         super.onResume();
 
         if (renderSet){
-            binding.openGLView.onResume();
+            airHockeyGLView.onResume();
         }
     }
 
@@ -74,13 +70,9 @@ public class MainActivity extends AppCompatActivity {
     protected void onPause() {
         super.onPause();
         if(renderSet){
-            binding.openGLView.onPause();
+            airHockeyGLView.onPause();
         }
     }
 
-    /**
-     * A native method that is implemented by the 'native-lib' native library,
-     * which is packaged with this application.
-     */
-    public native String stringFromJNI();
+
 }
